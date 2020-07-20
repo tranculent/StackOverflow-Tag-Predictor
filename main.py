@@ -216,14 +216,61 @@ def tfidf_features(X_train, X_val, X_test):
     # Fit the vectorizer on the train set
     # Transform the train, test, and val sets and return the result
     
-    tfidf_vectorizer= TfidfVectorizer(sublinear_tf=True, max_df=0.9, min_df=0.05, analyzer="word", stop_words=STOPWORDS)
+    tfidf_vectorizer= TfidfVectorizer(max_df=0.9, min_df=0.01, token_pattern='(\S+)')
     
-    tfidf_vectorizer.fit(X_train)
-    tfidf_vectorizer.transform(X_train)
-    tfidf_vectorizer.transform(X_test)
-    tfidf_vectorizer.transform(X_val)
+    X_train = tfidf_vectorizer.fit_transform(X_train)
+    X_test = tfidf_vectorizer.transform(X_test)
+    X_val = tfidf_vectorizer.transform(X_val)
     
     return X_train, X_val, X_test, tfidf_vectorizer.vocabulary_
     
 X_train_tfidf, X_val_tfidf, X_test_tfidf, tfidf_vocab = tfidf_features(X_train, X_val, X_test)
 tfidf_reversed_vocab = {i:word for word,i in tfidf_vocab.items()}
+
+print(X_train_tfidf[:5])
+print(tfidf_reversed_vocab)
+print('c#' in tfidf_reversed_vocab.values())
+print('c++' in tfidf_reversed_vocab.values())
+
+from sklearn.preprocessing import MultiLabelBinarizer
+
+mlb = MultiLabelBinarizer(classes=sorted(tags_counts.keys()))
+y_train = mlb.fit_transform(y_train)
+y_val = mlb.fit_transform(y_val)
+
+from sklearn.multiclass import OneVsRestClassifier
+from sklearn.linear_model import LogisticRegression, RidgeClassifier
+
+def train_classifier(X_train, y_train):
+    """
+      X_train, y_train — training data
+      
+      return: trained classifier
+    """
+    
+    # Create and fit LogisticRegression wraped into OneVsRestClassifier.
+    onevsrestcls = OneVsRestClassifier(LogisticRegression(max_iter=1000))
+    onevsrestcls.fit(X_train, y_train)
+
+    return onevsrestcls
+
+print(X_train_tfidf[:5])
+
+classifier_mybag = train_classifier(X_train_mybag, y_train)
+classifier_tfidf = train_classifier(X_train_tfidf, y_train)
+
+y_val_predicted_labels_mybag = classifier_mybag.predict(X_val_mybag)
+y_val_predicted_scores_mybag = classifier_mybag.decision_function(X_val_mybag)
+
+y_val_predicted_labels_tfidf = classifier_tfidf.predict(X_val_tfidf)
+y_val_predicted_scores_tfidf = classifier_tfidf.decision_function(X_val_tfidf)
+
+y_val_pred_inversed = mlb.inverse_transform(y_val_predicted_labels_tfidf)
+y_val_inversed = mlb.inverse_transform(y_val)
+for i in range(5):
+    print('Title:\t{}\nTrue labels:\t{}\nPredicted labels:\t{}\n\n'.format(
+        X_val[i],
+        ','.join(y_val_inversed[i]),
+        ','.join(y_val_pred_inversed[i])
+    ))
+
