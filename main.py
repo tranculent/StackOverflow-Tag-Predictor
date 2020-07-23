@@ -274,3 +274,58 @@ for i in range(5):
         ','.join(y_val_pred_inversed[i])
     ))
 
+from sklearn import metrics
+from sklearn.metrics import accuracy_score
+from sklearn.metrics import f1_score
+from sklearn.metrics import roc_auc_score 
+from sklearn.metrics import average_precision_score
+from sklearn.metrics import recall_score
+
+def print_evaluation_scores(y_val, predicted):
+  print("Acurracy score: " + str(accuracy_score(y_val, predicted)))
+  print("F1 score: " + str(f1_score(y_val, predicted,average='weighted')))
+  print("Average precision score: " + str(average_precision_score(y_val, predicted, average='weighted')))
+
+print('Bag-of-words')
+print_evaluation_scores(y_val, y_val_predicted_labels_mybag)
+print('Tfidf')
+print_evaluation_scores(y_val, y_val_predicted_labels_tfidf)
+
+from metrics import roc_auc
+%matplotlib inline
+
+n_classes = len(tags_counts)
+roc_auc(y_val, y_val_predicted_scores_mybag, n_classes)
+print(y_val)
+
+n_classes = len(tags_counts)
+roc_auc(y_val, y_val_predicted_scores_tfidf, n_classes)
+
+def print_words_for_tag(classifier, tag, tags_classes, index_to_words, all_words):
+    """
+        classifier: trained classifier
+        tag: particular tag
+        tags_classes: a list of classes names from MultiLabelBinarizer
+        index_to_words: index_to_words transformation
+        all_words: all words in the dictionary
+        
+        return nothing, just print top 5 positive and top 5 negative words for current tag
+    """
+    print('Tag:\t{}'.format(tag))
+    
+    # Extract an estimator from the classifier for the given tag.
+    # Extract feature coefficients from the estimator. 
+    print(tags_classes)
+    tag_n = np.where(tags_classes==tag)[0]
+    print(tag_n)
+    model = classifier.estimators_[tag_n]
+    print(tag_n)
+    
+    top_positive_words = [index_to_words[x] for x in model.coef_.argsort().tolist()[0][-8:]] # top-5 words sorted by the coefficiens.
+    top_negative_words = [index_to_words[x] for x in model.coef_.argsort().tolist()[0][:8]] # bottom-5 words  sorted by the coefficients.
+    # print('Top positive words:\t{}'.format(', '.join(top_positive_words)))
+    # print('Top negative words:\t{}\n'.format(', '.join(top_negative_words)))
+    
+print_words_for_tag(classifier_tfidf, 'c#', mlb.classes, tfidf_reversed_vocab, ALL_WORDS)
+# print_words_for_tag(classifier_tfidf, 'c++', mlb.classes, tfidf_reversed_vocab, ALL_WORDS)
+# print_words_for_tag(classifier_tfidf, 'linux', mlb.classes, tfidf_reversed_vocab, ALL_WORDS)
