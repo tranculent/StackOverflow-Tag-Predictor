@@ -107,7 +107,6 @@ temp = sorted(temp.items(), key=lambda x: x[1], reverse=True)
 
 i = 0
 for tag in temp:
-  if len(tags_counts) < 3:
     tags_counts[tag[0]] = temp[i][1]
     i+=1
 
@@ -123,7 +122,6 @@ temp = sorted(temp.items(), key=lambda x: x[1], reverse=True)
 
 i = 0
 for word in temp:
-  if len(words_counts) < 3:
     words_counts[word[0]] = temp[i][1]
     i+=1
 
